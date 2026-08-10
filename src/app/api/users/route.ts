@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Create a Supabase client with the Service Role key
-// This bypasses RLS and allows Admin operations like creating users.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Create a Supabase client with the Service Role key lazily
+const getSupabaseAdmin = () => {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
-  }
-);
+  );
+};
 
 export async function POST(request: Request) {
   try {
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const supabaseAdmin = getSupabaseAdmin();
     // 1. Create User in Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
